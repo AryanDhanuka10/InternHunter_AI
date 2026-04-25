@@ -1,0 +1,17 @@
+# ── Daily Git Commit Messages (copy-paste ready) ──
+
+Day 1:  feat: scaffold project structure and config
+Day 2:  feat: add google search scraper with Serper API
+Day 3:  feat: add regex parser for stipend/deadline/location
+Day 4:  feat: add SQLite database layer with upsert logic
+Day 5:  feat: add daily digest HTML builder
+Day 6:  feat: add Gmail SMTP mailer and cold email template
+Day 7:  feat: wire full pipeline in scheduler.py
+Day 8:  test: add daily smoke tests (parser, db, digest, mailer)
+Day 9:  feat: add FastAPI app with opportunities/profile/actions routes
+Day 10: ci: add GitHub Actions workflow for daily 9:30 AM IST run
+Day 11: feat: add .env.example and dotenv config loading
+Day 12: refactor: clean up logging and error handling across modules
+Day 13: feat: add stipend filter in config
+Day 14: docs: update README with setup and usage instructions
+Day 15: feat: add Streamlit dashboard (Day 15 task)

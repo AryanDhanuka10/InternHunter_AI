@@ -1,0 +1,38 @@
+name: Daily Internship Hunt
+
+on:
+  schedule:
+    - cron: '0 4 * * *'   # 9:30 AM IST every day
+  workflow_dispatch:        # allow manual trigger
+
+jobs:
+  hunt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run pipeline
+        env:
+          SERPER_API_KEY: ${{ secrets.SERPER_API_KEY }}
+          GMAIL_USER:     ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASS: ${{ secrets.GMAIL_APP_PASS }}
+          USER_NAME:      ${{ secrets.USER_NAME }}
+          USER_EMAIL:     ${{ secrets.USER_EMAIL }}
+          USER_COLLEGE:   ${{ secrets.USER_COLLEGE }}
+          USER_BRANCH:    ${{ secrets.USER_BRANCH }}
+          USER_YEAR:      ${{ secrets.USER_YEAR }}
+          USER_SKILLS:    ${{ secrets.USER_SKILLS }}
+          USER_GITHUB:    ${{ secrets.USER_GITHUB }}
+          USER_LINKEDIN:  ${{ secrets.USER_LINKEDIN }}
+        run: python -m internhunter.scheduler
+
+      - name: Run tests
+        run: pytest tests/ -v --tb=short
