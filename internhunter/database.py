@@ -1,17 +1,24 @@
 """SQLite storage for internship opportunities."""
-import sqlite3, logging
-from datetime import datetime
+import os, sqlite3, logging
 from internhunter.config import DB_PATH
 
 logger = logging.getLogger(__name__)
 
 
+def _db_path() -> str:
+    """Read DB_PATH at call-time so pytest monkeypatch always works."""
+    import internhunter.database as _self
+    return _self.DB_PATH
+
+
 def get_conn():
-    return sqlite3.connect(DB_PATH)
+    return sqlite3.connect(_db_path())
 
 
 def init_db():
-    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True) if "/" in DB_PATH else None
+    path = _db_path()
+    if "/" in path:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
     with get_conn() as conn:
         conn.execute("""
             CREATE TABLE IF NOT EXISTS opportunities (
@@ -41,40 +48,134 @@ def init_db():
             )
         """)
         conn.commit()
-    logger.info("Database initialised")
+    logger.info("Database initialised at %s", path)
 
 
 def upsert_opportunity(opp: dict) -> bool:
     """Insert new opportunity; skip if link already exists. Returns True if inserted."""
-    import os
-    os.makedirs("data", exist_ok=True)
     sql = """
         INSERT OR IGNORE INTO opportunities
-            (title, role, company, link, source, stipend, deadline, location, apply_link, snippet, scraped_at)
+            (title, role, company, link, source, stipend, deadline, location,
+             apply_link, snippet, scraped_at)
         VALUES (?,?,?,?,?,?,?,?,?,?,?)
     """
     with get_conn() as conn:
         cur = conn.execute(sql, (
-            opp.get("title"), opp.get("role"), opp.get("company", ""),
-            opp.get("link"), opp.get("source"), opp.get("stipend"),
-            opp.get("deadline"), opp.get("location"), opp.get("apply_link"),
-            opp.get("snippet"), opp.get("scraped_at")
+            opp.get("title"),      opp.get("role"),      opp.get("company", ""),
+            opp.get("link"),       opp.get("source"),    opp.get("stipend"),
+            opp.get("deadline"),   opp.get("location"),  opp.get("apply_link"),
+            opp.get("snippet"),    opp.get("scraped_at"),
         ))
         conn.commit()
         return cur.rowcount > 0
 
 
+def upsert_many(opps: list[dict]) -> tuple[int, int]:
+    """Bulk insert. Returns (inserted, skipped) counts."""
+    inserted = skipped = 0
+    for opp in opps:
+        if upsert_opportunity(opp):
+            inserted += 1
+        else:
+            skipped += 1
+    logger.info(f"upsert_many: {inserted} new, {skipped} duplicates skipped")
+    return inserted, skipped
+
+
 def get_new_opportunities(limit: int = 20) -> list[dict]:
+    """Return unnotified new opportunities, newest first."""
     with get_conn() as conn:
         conn.row_factory = sqlite3.Row
         cur = conn.execute(
-            "SELECT * FROM opportunities WHERE status='new' AND notified=0 ORDER BY id DESC LIMIT ?",
+            "SELECT * FROM opportunities WHERE status='new' AND notified=0 "
+            "ORDER BY id DESC LIMIT ?",
             (limit,)
+        )
+        return [dict(r) for r in cur.fetchall()]
+
+
+def get_by_stipend(min_amount: int = 0, limit: int = 20) -> list[dict]:
+    """Return opportunities where parsed stipend >= min_amount (INR/month)."""
+    with get_conn() as conn:
+        conn.row_factory = sqlite3.Row
+        cur = conn.execute(
+            "SELECT * FROM opportunities WHERE stipend != 'Not mentioned' "
+            "ORDER BY id DESC LIMIT ?",
+            (limit * 3,)
+        )
+        rows = [dict(r) for r in cur.fetchall()]
+
+    if min_amount <= 0:
+        return rows[:limit]
+
+    def to_int(stipend_str: str) -> int:
+        import re
+        m = re.search(r"\d+", stipend_str.replace(",", ""))
+        return int(m.group()) if m else 0
+
+    return [r for r in rows if to_int(r["stipend"]) >= min_amount][:limit]
+
+
+def get_by_location(location: str, limit: int = 20) -> list[dict]:
+    """Return opportunities matching a location keyword (case-insensitive)."""
+    with get_conn() as conn:
+        conn.row_factory = sqlite3.Row
+        cur = conn.execute(
+            "SELECT * FROM opportunities WHERE LOWER(location) LIKE ? "
+            "ORDER BY id DESC LIMIT ?",
+            (f"%{location.lower()}%", limit)
+        )
+        return [dict(r) for r in cur.fetchall()]
+
+
+def get_by_role(role: str, limit: int = 20) -> list[dict]:
+    """Return opportunities matching a role keyword (case-insensitive)."""
+    with get_conn() as conn:
+        conn.row_factory = sqlite3.Row
+        cur = conn.execute(
+            "SELECT * FROM opportunities WHERE LOWER(role) LIKE ? "
+            "ORDER BY id DESC LIMIT ?",
+            (f"%{role.lower()}%", limit)
         )
         return [dict(r) for r in cur.fetchall()]
 
 
 def mark_notified(ids: list[int]):
     with get_conn() as conn:
-        conn.executemany("UPDATE opportunities SET notified=1 WHERE id=?", [(i,) for i in ids])
+        conn.executemany(
+            "UPDATE opportunities SET notified=1 WHERE id=?",
+            [(i,) for i in ids]
+        )
         conn.commit()
+
+
+def mark_applied(opp_id: int, method: str, notes: str = ""):
+    """Log that you applied to an opportunity."""
+    from datetime import datetime, timezone
+    with get_conn() as conn:
+        conn.execute(
+            "INSERT INTO applied (opp_id, method, applied_at, notes) VALUES (?,?,?,?)",
+            (opp_id, method, datetime.now(timezone.utc).isoformat(), notes)
+        )
+        conn.execute(
+            "UPDATE opportunities SET status='applied' WHERE id=?",
+            (opp_id,)
+        )
+        conn.commit()
+    logger.info(f"Marked opp {opp_id} as applied via {method}")
+
+
+def get_stats() -> dict:
+    """Return a summary dict — used in digest and dashboard."""
+    with get_conn() as conn:
+        def scalar(sql, *args):
+            return conn.execute(sql, args).fetchone()[0] or 0
+        return {
+            "total":         scalar("SELECT COUNT(*) FROM opportunities"),
+            "new":           scalar("SELECT COUNT(*) FROM opportunities WHERE status='new'"),
+            "applied":       scalar("SELECT COUNT(*) FROM opportunities WHERE status='applied'"),
+            "with_stipend":  scalar("SELECT COUNT(*) FROM opportunities WHERE stipend != 'Not mentioned'"),
+            "with_deadline": scalar("SELECT COUNT(*) FROM opportunities WHERE deadline != 'Not mentioned'"),
+            "with_location": scalar("SELECT COUNT(*) FROM opportunities WHERE location != 'Not mentioned'"),
+            "notified":      scalar("SELECT COUNT(*) FROM opportunities WHERE notified=1"),
+        }

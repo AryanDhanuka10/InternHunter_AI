@@ -10,7 +10,8 @@ def test_extract_stipend_inr():
     assert "₹15,000" in _extract_stipend("Stipend: INR 15,000 per month")
 
 def test_extract_stipend_symbol():
-    assert "₹20000" in _extract_stipend("₹20000/month stipend offered")
+    # Parser normalises to comma-formatted output e.g. ₹20,000/month
+    assert "₹20,000" in _extract_stipend("₹20000/month stipend offered")
 
 def test_extract_deadline():
     from internhunter.parser import _extract_deadline
