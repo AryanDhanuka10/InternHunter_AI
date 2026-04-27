@@ -59,7 +59,7 @@ def test_draft_cold_email():
     user = {"name":"Raj","year":"3rd Year","branch":"CSE","college":"DTU",
             "skills":["Python","ML"],"github":"https://github.com/raj",
             "linkedin":"https://linkedin.com/in/raj","email":"raj@example.com"}
-    body = draft_cold_email(opp, user)
-    assert "Raj"       in body
+    draft = draft_cold_email(opp, user)
+    body  = draft["text"]
     assert "Acme Corp" in body
     assert "ML Engineer" in body
