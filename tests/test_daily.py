@@ -63,3 +63,43 @@ def test_draft_cold_email():
     body  = draft["text"]
     assert "Acme Corp" in body
     assert "ML Engineer" in body
+
+# ── Edge-case parser tests (Day 8) ────────────────────────────
+
+def test_parse_listing_extracts_all_three_fields_from_one_snippet():
+    """
+    When stipend, deadline AND location all appear in a single snippet,
+    parse_listing() must extract all three correctly in one pass.
+    Real-world case: individual Internshala listing pages contain everything.
+    """
+    raw = {
+        "title":      "ML Intern at Razorpay",
+        "link":       "https://internshala.com/job/123",
+        "snippet":    "Stipend Rs. 20,000/month. Last date to apply: 15 June 2025. Work From Home.",
+        "role":       "machine learning intern",
+        "scraped_at": "2025-04-27T00:00:00",
+    }
+    result = parse_listing(raw)
+    assert result["stipend"]  == "₹20,000/month",         f"stipend wrong: {result['stipend']}"
+    assert "June" in result["deadline"],                   f"deadline wrong: {result['deadline']}"
+    assert result["location"] == "Work From Home",         f"location wrong: {result['location']}"
+
+
+def test_parse_listing_finds_stipend_in_title_when_snippet_has_none():
+    """
+    parse_listing() concatenates title + snippet before parsing.
+    If the snippet is generic but the title contains the stipend,
+    the parser must still find it — not return 'Not mentioned'.
+    Real-world case: LinkedIn pulse articles often have all info in the title.
+    """
+    raw = {
+        "title":      "ML Intern ₹25,000/month Remote — Apply Now",
+        "link":       "https://linkedin.com/pulse/abc",
+        "snippet":    "Great opportunity to grow your skills at a top startup.",
+        "role":       "machine learning intern",
+        "scraped_at": "2025-04-27T00:00:00",
+    }
+    result = parse_listing(raw)
+    assert result["stipend"] != "Not mentioned",  "Should have found stipend in title"
+    assert "25,000" in result["stipend"],          f"Expected 25000, got: {result['stipend']}"
+    assert result["location"] == "Remote",         f"Should have found Remote in title"
