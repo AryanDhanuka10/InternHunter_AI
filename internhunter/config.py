@@ -10,7 +10,7 @@ USER_EMAIL       = os.getenv("USER_EMAIL", "you@example.com")
 USER_COLLEGE     = os.getenv("USER_COLLEGE", "IIT/NIT/DTU etc.")
 USER_BRANCH      = os.getenv("USER_BRANCH", "Computer Science")
 USER_YEAR        = os.getenv("USER_YEAR", "3rd Year B.Tech")
-USER_SKILLS      = os.getenv("USER_SKILLS", "Python, ML, React").split(",")
+USER_SKILLS      = os.getenv("USER_SKILLS", "Python,ML,React").split(",")
 USER_GITHUB      = os.getenv("USER_GITHUB", "https://github.com/yourhandle")
 USER_LINKEDIN    = os.getenv("USER_LINKEDIN", "https://linkedin.com/in/yourhandle")
 USER_RESUME_PATH = os.getenv("USER_RESUME_PATH", "assets/resume.pdf")
@@ -21,19 +21,33 @@ INTERNSHIP_ROLES = [
     "machine learning intern",
     "data science intern",
     "backend intern",
-    "AI intern"
+    "fullstack intern",
+    "research intern",
 ]
-PREFERRED_LOCATIONS = ["remote", "Greater Noida", "Noida", "Delhi", "Bangalore", "Mumbai", "Hyderabad"]
-MIN_STIPEND        = 10000          # INR per month (0 = no filter)
+PREFERRED_LOCATIONS = ["remote", "bangalore", "delhi", "mumbai", "hyderabad"]
+MIN_STIPEND         = 10000   # INR/month — listings below this are dropped (0 = keep all)
 MAX_RESULTS_PER_RUN = 50
 
+# ── Scoring weights ───────────────────────────────────────────
+# Score = sum of weights for each condition that matches.
+# Higher score → listing appears first in digest and dashboard.
+SCORE_WEIGHTS = {
+    "has_stipend":        12,   # any stipend info extracted
+    "stipend_15k_plus":   15,   # stipend >= ₹15,000/month
+    "stipend_25k_plus":   20,   # stipend >= ₹25,000/month (stacks with above)
+    "preferred_location": 20,   # matches any location in PREFERRED_LOCATIONS
+    "has_deadline":       10,   # deadline extracted (means it's an individual listing)
+    "known_source":       5,    # internshala / unstop / wellfound (not 'other')
+    "has_company":        5,    # company field is non-empty
+}
+
 # ── API Keys ──────────────────────────────────────────────────
-SERPER_API_KEY   = os.getenv("SERPER_API_KEY", "")   # google search
-OPENAI_API_KEY   = os.getenv("OPENAI_API_KEY", "")   # email drafting
-GMAIL_USER       = os.getenv("GMAIL_USER", "")
-GMAIL_APP_PASS   = os.getenv("GMAIL_APP_PASS", "")   # Gmail App Password
+SERPER_API_KEY = os.getenv("SERPER_API_KEY", "")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+GMAIL_USER     = os.getenv("GMAIL_USER", "")
+GMAIL_APP_PASS = os.getenv("GMAIL_APP_PASS", "")
 
 # ── Paths ─────────────────────────────────────────────────────
-DB_PATH          = "data/internships.db"
-LOG_PATH         = "logs/daily.log"
-DIGEST_PATH      = "data/digest"
+DB_PATH     = "data/internships.db"
+LOG_PATH    = "logs/daily.log"
+DIGEST_PATH = "data/digest"

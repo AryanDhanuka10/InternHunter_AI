@@ -17,6 +17,7 @@ import logging, os, time, traceback
 from datetime import datetime, timezone
 from internhunter.scraper  import scrape_all_roles
 from internhunter.parser   import parse_all
+from internhunter.filters  import apply_filters
 from internhunter.database import (
     init_db, upsert_many, get_new_opportunities,
     mark_notified, get_stats
@@ -84,6 +85,8 @@ def run() -> dict:
         "scraped":     0,
         "parsed":      0,
         "inserted":    0,
+        "filtered":    0,
+        "dropped":     0,
         "duplicates":  0,
         "new_opps":    0,
         "email_sent":  False,
@@ -124,10 +127,23 @@ def run() -> dict:
     except Exception:
         summary["stages_fail"].append("parse")
 
+    # ── Stage 3.5: Filter + Score ────────────────────────────
+    filtered = parsed   # default: keep all if filter stage fails
+    try:
+        with _stage("3.5 · Filter + Score"):
+            filtered, dropped = apply_filters(parsed)
+            summary["filtered"] = len(filtered)
+            summary["dropped"]  = len(dropped)
+            logger.info(
+                f"  Kept {len(filtered)}, dropped {len(dropped)} "                f"(stipend below threshold or noise)"            )
+        summary["stages_ok"].append("filter")
+    except Exception:
+        summary["stages_fail"].append("filter")
+
     # ── Stage 4: Store ────────────────────────────────────────
     try:
         with _stage("4 · Store"):
-            inserted, skipped = upsert_many(parsed)
+            inserted, skipped = upsert_many(filtered)
             summary["inserted"]   = inserted
             summary["duplicates"] = skipped
             logger.info(f"  Inserted: {inserted}  |  Duplicates skipped: {skipped}")
@@ -185,6 +201,7 @@ def run() -> dict:
     logger.info("=" * 56)
     logger.info(f"  Scraped     : {summary['scraped']}")
     logger.info(f"  Parsed      : {summary['parsed']}")
+    logger.info(f"  Filtered    : {summary['filtered']}  (dropped: {summary['dropped']})")
     logger.info(f"  Inserted    : {summary['inserted']}  (duplicates: {summary['duplicates']})")
     logger.info(f"  New in inbox: {summary['new_opps']}")
     logger.info(f"  Email sent  : {'YES' if summary['email_sent'] else 'NO'}")

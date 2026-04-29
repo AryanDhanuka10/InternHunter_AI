@@ -45,6 +45,7 @@ def _patch_all(scrape_returns=None, send_returns=True):
         "save_digest":           mock.Mock(return_value=("data/digest/test.html","data/digest/test.txt")),
         "send_digest_email":     mock.Mock(return_value=send_returns),
         "mark_notified":         mock.Mock(),
+        "apply_filters":          mock.Mock(return_value=([_fake_opp(i) for i in range(3)], [])),
     }
 
 
@@ -74,7 +75,7 @@ class TestSchedulerRun:
         with mock.patch.multiple("internhunter.scheduler", **_patch_all()):
             summary = run()
         assert summary["stages_fail"] == []
-        assert len(summary["stages_ok"]) == 6
+        assert len(summary["stages_ok"]) == 7   # db_init, scrape, parse, filter, store, digest, notify
 
     def test_scraped_count_in_summary(self):
         from internhunter.scheduler import run
