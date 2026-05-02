@@ -23,6 +23,8 @@ from internhunter.database import (
     mark_notified, get_stats
 )
 from internhunter.digest   import build_digest_html, build_digest_text, save_digest
+from internhunter.digest_pdf import build_digest_pdf, attach_pdf_to_email
+from internhunter.referral   import build_referral_hints
 from internhunter.mailer   import send_digest_email
 
 # ── Logging setup — writes to BOTH terminal and logs/daily.log ─
@@ -90,6 +92,7 @@ def run() -> dict:
         "duplicates":  0,
         "new_opps":    0,
         "email_sent":  False,
+        "pdf_path":    "",
         "stages_ok":   [],
         "stages_fail": [],
         "elapsed_s":   0,
@@ -159,12 +162,16 @@ def run() -> dict:
             opps = get_new_opportunities(limit=30)
             summary["new_opps"] = len(opps)
             if opps:
-                stats     = get_stats()
-                html_body = build_digest_html(opps, stats=stats)
-                text_body = build_digest_text(opps)
-                hp, tp    = save_digest(html_body, text_body)
+                stats         = get_stats()
+                ref_hints     = build_referral_hints(opps)
+                html_body     = build_digest_html(opps, stats=stats, show_referrals=True)
+                text_body     = build_digest_text(opps, show_referrals=True)
+                hp, tp        = save_digest(html_body, text_body)
+                pdf_path      = build_digest_pdf(opps, stats=stats, referral_hints=ref_hints)
+                summary["pdf_path"] = pdf_path
                 logger.info(f"  Built digest for {len(opps)} opportunities")
-                logger.info(f"  Saved → {hp}")
+                logger.info(f"  Saved HTML → {hp}")
+                logger.info(f"  Saved PDF  → {pdf_path}")
             else:
                 logger.info("  No new opportunities — digest skipped")
         summary["stages_ok"].append("digest")
@@ -179,6 +186,7 @@ def run() -> dict:
                 sent = send_digest_email(
                     subject   = f"[InternHunter] {len(opps)} New Internships — {date_str}",
                     body_html = html_body,
+                    pdf_path  = summary.get("pdf_path", ""),
                 )
                 summary["email_sent"] = sent
                 if sent:

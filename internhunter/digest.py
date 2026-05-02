@@ -8,6 +8,7 @@ Produces two outputs:
 Both functions accept the same list[dict] from get_new_opportunities().
 """
 from datetime import datetime
+from internhunter.referral import build_referral_hints, referral_section_html, referral_section_text
 
 
 # ── Helpers ───────────────────────────────────────────────────
@@ -51,7 +52,7 @@ def _safe(value: str, fallback: str = "—") -> str:
 
 # ── HTML digest ───────────────────────────────────────────────
 
-def build_digest_html(opportunities: list[dict], stats: dict = None) -> str:
+def build_digest_html(opportunities: list[dict], stats: dict = None, show_referrals: bool = True) -> str:
     """
     Build a full HTML email digest.
     Pass stats=get_stats() to include a summary header bar.
@@ -117,6 +118,9 @@ def build_digest_html(opportunities: list[dict], stats: dict = None) -> str:
           No new opportunities found today. Check back tomorrow!
         </td></tr>"""
 
+    # ── Referral section ──────────────────────────────────
+    referral_html = referral_section_html(build_referral_hints(opportunities)) if show_referrals else ""
+
     return f"""<!DOCTYPE html>
 <html>
 <head><meta charset='utf-8'></head>
@@ -155,6 +159,9 @@ def build_digest_html(opportunities: list[dict], stats: dict = None) -> str:
       </table>
     </div>
 
+    <!-- Referral hints -->
+    {referral_html}
+
     <!-- Footer -->
     <div style='padding:14px 28px;background:#f8f9fa;
                 border-top:1px solid #eee;font-size:11px;color:#999'>
@@ -168,7 +175,7 @@ def build_digest_html(opportunities: list[dict], stats: dict = None) -> str:
 
 # ── Plain-text digest ─────────────────────────────────────────
 
-def build_digest_text(opportunities: list[dict]) -> str:
+def build_digest_text(opportunities: list[dict], show_referrals: bool = True) -> str:
     """
     Plain-text version — readable in terminal and as email fallback.
     """
@@ -202,6 +209,8 @@ def build_digest_text(opportunities: list[dict]) -> str:
             f"      Apply:    {link}",
         ]
 
+    if show_referrals:
+        lines.append(referral_section_text(build_referral_hints(opportunities)))
     lines += ["", "=" * 60, "  InternHunter Bot · auto-generated", "=" * 60]
     return "\n".join(lines)
 

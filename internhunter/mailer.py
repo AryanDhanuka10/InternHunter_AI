@@ -103,7 +103,7 @@ def draft_cold_email(opportunity: dict, user: dict = None) -> dict:
     }
 
 
-def send_digest_email(subject: str, body_html: str, to: str = None) -> bool:
+def send_digest_email(subject: str, body_html: str, to: str = None, pdf_path: str = None) -> bool:
     """Send the daily HTML digest to your own Gmail inbox."""
     if not _credentials_ok():
         return False
@@ -114,6 +114,10 @@ def send_digest_email(subject: str, body_html: str, to: str = None) -> bool:
     msg["From"]    = GMAIL_USER
     msg["To"]      = recipient
     msg.attach(MIMEText(body_html, "html"))
+
+    if pdf_path:
+        from internhunter.digest_pdf import attach_pdf_to_email
+        attach_pdf_to_email(msg, pdf_path)
 
     return _send(msg, recipient, label="digest")
 

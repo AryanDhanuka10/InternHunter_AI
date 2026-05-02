@@ -144,7 +144,7 @@ class TestBuildDigestHtml:
         assert "With Stipend" in html
 
     def test_without_stats_no_stats_bar(self):
-        html = build_digest_html(SAMPLE_OPPS, stats=None)
+        html = build_digest_html(SAMPLE_OPPS, stats=None, show_referrals=False)
         assert "With Stipend" not in html
 
     def test_footer_present(self):
