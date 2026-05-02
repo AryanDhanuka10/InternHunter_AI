@@ -42,10 +42,10 @@ SCORE_WEIGHTS = {
 }
 
 # ── API Keys ──────────────────────────────────────────────────
-SERPER_API_KEY = os.getenv("SERPER_API_KEY", "")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
-GMAIL_USER     = os.getenv("GMAIL_USER", "")
-GMAIL_APP_PASS = os.getenv("GMAIL_APP_PASS", "")
+SERPER_API_KEY = os.getenv("SERPER_API_KEY", "").strip()
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "").strip()
+GMAIL_USER     = os.getenv("GMAIL_USER", "").strip()
+GMAIL_APP_PASS = os.getenv("GMAIL_APP_PASS", "").strip()
 
 # ── Paths ─────────────────────────────────────────────────────
 DB_PATH     = "data/internships.db"
