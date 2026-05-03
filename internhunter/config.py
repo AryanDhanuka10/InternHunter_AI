@@ -29,7 +29,7 @@ INTERNSHIP_ROLES = [
     "NLP intern",
     "software engineering intern",
     "backend developer intern",
-    "AI research intern",
+    "AI research intern" ,
 ]
 
 # International remote roles get a separate targeted search
