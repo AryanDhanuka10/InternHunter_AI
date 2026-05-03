@@ -333,7 +333,7 @@ elif page == "⚡ Pipeline":
             if st.button("🚀 Run Pipeline", type="primary", use_container_width=True):
                 with st.spinner("Running pipeline…"):
                     if CLOUD_MODE:
-                        result = _api("/api/actions/run-pipeline", method="POST")
+                        result = _api("/api/actions/run-pipeline?async_run=true", method="POST")
                         ok     = result and not result.get("stages_fail")
                         output = json.dumps(result or {}, indent=2)
                     else:
