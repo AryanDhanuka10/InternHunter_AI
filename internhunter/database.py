@@ -36,14 +36,23 @@ def init_db():
                 status      TEXT DEFAULT 'new',
                 scraped_at  TEXT,
                 notified    INTEGER DEFAULT 0,
-                score       INTEGER DEFAULT 0
+                score       INTEGER DEFAULT 0,
+                duration    TEXT,
+                expired     INTEGER DEFAULT 0,
+                is_international INTEGER DEFAULT 0
             )
         """)
         # Migration: add score column to existing DBs (safe — no-op if already exists)
         existing = [r[1] for r in conn.execute("PRAGMA table_info(opportunities)").fetchall()]
         if "score" not in existing:
             conn.execute("ALTER TABLE opportunities ADD COLUMN score INTEGER DEFAULT 0")
-            logger.info("Migration: added score column to opportunities")
+            logger.info("Migration: added score column")
+        if "duration" not in existing:
+            conn.execute("ALTER TABLE opportunities ADD COLUMN duration TEXT")
+        if "expired" not in existing:
+            conn.execute("ALTER TABLE opportunities ADD COLUMN expired INTEGER DEFAULT 0")
+        if "is_international" not in existing:
+            conn.execute("ALTER TABLE opportunities ADD COLUMN is_international INTEGER DEFAULT 0")
         conn.execute("""
             CREATE TABLE IF NOT EXISTS applied (
                 id         INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -62,15 +71,17 @@ def upsert_opportunity(opp: dict) -> bool:
     sql = """
         INSERT OR IGNORE INTO opportunities
             (title, role, company, link, source, stipend, deadline, location,
-             apply_link, snippet, scraped_at, score)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+             apply_link, snippet, scraped_at, score, duration, expired, is_international)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     """
     with get_conn() as conn:
         cur = conn.execute(sql, (
-            opp.get("title"),      opp.get("role"),      opp.get("company", ""),
-            opp.get("link"),       opp.get("source"),    opp.get("stipend"),
-            opp.get("deadline"),   opp.get("location"),  opp.get("apply_link"),
-            opp.get("snippet"),    opp.get("scraped_at"), opp.get("score", 0),
+            opp.get("title"),       opp.get("role"),      opp.get("company", ""),
+            opp.get("link"),        opp.get("source"),    opp.get("stipend"),
+            opp.get("deadline"),    opp.get("location"),  opp.get("apply_link"),
+            opp.get("snippet"),     opp.get("scraped_at"),opp.get("score", 0),
+            opp.get("duration"),    1 if opp.get("expired") else 0,
+            1 if opp.get("is_international") else 0,
         ))
         conn.commit()
         return cur.rowcount > 0
@@ -234,3 +245,57 @@ def rescore_all() -> int:
 
     logger.info(f"rescore_all: updated {updated}/{len(rows)} rows")
     return updated
+
+
+def get_opportunities_filtered(
+    role: str = "",
+    location: str = "",
+    min_stipend: int = 0,
+    show_expired: bool = False,
+    international_only: bool = False,
+    limit: int = 50,
+) -> list[dict]:
+    """
+    Proper SQL-side filtering — role/location/stipend are matched IN the DB,
+    not passed as search terms to LinkedIn.
+
+    This is what the dashboard filter should use, not get_by_role/get_by_location
+    which only do partial text matches on stored data.
+    """
+    conditions = ["1=1"]
+    params     = []
+
+    if not show_expired:
+        conditions.append("(expired = 0 OR expired IS NULL)")
+
+    if role:
+        conditions.append("LOWER(role) LIKE ?")
+        params.append(f"%{role.lower()}%")
+
+    if location:
+        conditions.append("LOWER(location) LIKE ?")
+        params.append(f"%{location.lower()}%")
+
+    if international_only:
+        conditions.append("is_international = 1")
+
+    where = " AND ".join(conditions)
+    sql   = f"SELECT * FROM opportunities WHERE {where} ORDER BY score DESC, id DESC LIMIT ?"
+    params.append(limit)
+
+    with get_conn() as conn:
+        conn.row_factory = sqlite3.Row
+        cur = conn.execute(sql, params)
+        rows = [dict(r) for r in cur.fetchall()]
+
+    # Stipend filter in Python (stipend is a string like "₹15,000/month")
+    if min_stipend > 0:
+        import re
+        def to_int(s):
+            if not s or s == "Not mentioned": return 0
+            m = re.search(r"\d+", s.replace(",",""))
+            return int(m.group()) if m else 0
+        rows = [r for r in rows if to_int(r.get("stipend","")) >= min_stipend
+                or r.get("stipend","") == "Not mentioned"]
+
+    return rows

@@ -8,9 +8,9 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from internhunter.digest_pdf import (
     build_digest_pdf, attach_pdf_to_email,
-    _stipend_safe, _stipend_color, _safe
+    _stipend_safe, _stipend_style_key, _safe
 )
-from reportlab.lib import colors
+# colors not needed
 
 # ── Fixtures ──────────────────────────────────────────────────
 
@@ -60,16 +60,16 @@ class TestHelpers:
         assert "/mo" in _stipend_safe("₹20,000/month")
 
     def test_stipend_color_high_is_green(self):
-        c = _stipend_color("₹20,000/month")
-        assert c == colors.HexColor("#1a7f37")
+        c = _stipend_style_key("₹20,000/month")
+        assert c == "green_b"
 
     def test_stipend_color_low_is_amber(self):
-        c = _stipend_color("₹8,000/month")
-        assert c == colors.HexColor("#b76e00")
+        c = _stipend_style_key("₹8,000/month")
+        assert c == "amber_b"
 
     def test_stipend_color_not_mentioned_is_grey(self):
-        c = _stipend_color("Not mentioned")
-        assert c == colors.HexColor("#666666")
+        c = _stipend_style_key("Not mentioned")
+        assert c == "grey_sm"
 
     def test_safe_returns_value(self):
         assert _safe("Remote") == "Remote"

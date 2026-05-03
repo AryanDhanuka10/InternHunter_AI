@@ -2,140 +2,129 @@
 parser.py — Extract structured fields from raw Serper snippets.
 Pure regex, no external API, runs fully offline.
 
-Handles:
-  - ₹/Rs./INR flat amounts       e.g. Rs. 15,000/month
-  - Ranges                        e.g. Rs. 15,000 - 20,000/month
-  - k-notation                    e.g. 15k/month
-  - Lacs per month                e.g. INR 1.1 Lacs per month  → ₹1,10,000/month
-  - LPA (annual)                  e.g. Rs. 3-7 LPA             → ₹25,000/month
-  - No-space labels               e.g. Compensation20,000 inr per month
-  - All major deadline wordings   e.g. last date / apply by / apply before / closes
-  - City aliases                  e.g. Bengaluru → Bangalore, Gurgaon → Gurugram
+Key improvements:
+  - Year validation — rejects deadlines from past years
+  - Duration extraction — "2 months", "6 weeks" etc.
+  - Expired listing detection
+  - Stipend from structured snippets (Duration: | Stipend: pattern)
+  - International salary handling (USD/EUR)
 """
 import re
 import logging
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
-# ── Month name fragment used across deadline patterns ─────────
+CURRENT_YEAR = datetime.now().year  # 2026
+
+# ── Month names ───────────────────────────────────────────────
 _M = (
     r"(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?"
     r"|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?"
     r"|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)"
 )
 
-# ── Stipend patterns — ordered most-specific → least-specific ─
-#    Every pattern must have exactly ONE capture group: the numeric value.
+# ── Stipend patterns ──────────────────────────────────────────
 _STIPEND_PATTERNS = [re.compile(p, re.IGNORECASE) for p in [
-
-    # 1. Lacs per month  →  "INR 1.1 Lacs per month", "₹ 1.6 Lacs/month"
-    #    Captured: the decimal number (e.g. "1.1"). Conversion: ×1,00,000
-    r"(?:Rs\.?|INR|₹)\s*([\d]+(?:\.\d+)?)\s*Lac(?:s|hs?)?\s*(?:[-\u2013]\s*[\d.]+\s*Lac(?:s|hs?)?\s*)?(?:per\s*month|/\s*month|p\.?m\.?)",
-
-    # 2. LPA (annual)  →  "Rs. 3-7 LPA", "INR 5 LPA"
-    #    Captured: lower bound. Conversion: ×1,00,000 ÷ 12
+    # Lacs/month: "INR 1.1 Lacs per month"
+    r"(?:Rs\.?|INR|₹)\s*([\d]+(?:\.\d+)?)\s*Lac(?:s|hs?)?\s*(?:[-–]\s*[\d.]+\s*Lac(?:s|hs?)?\s*)?(?:per\s*month|/\s*month|p\.?m\.?)",
+    # LPA annual: "Rs. 3-7 LPA"
     r"(?:Rs\.?|INR|₹)\s*([\d.]+)\s*(?:[-–]\s*[\d.]+\s*)?(?:LPA|L\.P\.A\.?)",
-
-    # 3. Range with currency symbol  →  "Rs. 15,000 - 20,000/month"
-    #    Captured: lower bound only (conservative estimate)
+    # Range: "Rs. 15,000 - 20,000/month"
     r"(?:Rs\.?|INR|₹)\s*([\d,]+)\s*[-–]\s*[\d,]+\s*(?:per\s*month|/\s*month|p\.?m\.?)?",
-
-    # 4. Flat with currency symbol  →  "₹20,000/month", "Rs. 15000 per month"
+    # Flat: "₹20,000/month"
     r"(?:Rs\.?|INR|₹)\s*([\d,]+)(?!\s*[\d.]*\s*Lac)\s*(?:per\s*month|/\s*month|p\.?m\.?)?",
-
-    # 5. Compensation/Stipend label + number + INR/inr  →  "Compensation20,000 inr per month"
-    r"(?:compensation|stipend|salary)[^\d]*([\d,]{4,})\s*(?:inr|rs\.?|₹)?\s*(?:per\s*month|/\s*month|p\.?m\.?)?",
-
-    # 6. Bare number + per month (no currency symbol)  →  "20,000 per month"
+    # Label+number: "Compensation20,000 inr per month" / "Stipend: 15000"
+    r"(?:compensation|stipend|salary)[:\s]*(?:Rs\.?|INR|₹)?\s*([\d,]{4,})\s*(?:inr|rs\.?|₹)?\s*(?:per\s*month|/\s*month|p\.?m\.?)?",
+    # Bare number + per month
     r"(?<!\d)([\d,]{4,})\s*(?:per\s*month|/\s*month|p\.?m\.?)",
-
-    # 7. k-notation  →  "15k/month", "20K per month"
+    # k-notation: "15k/month"
     r"(?<!\d)([\d]+[kK])\s*(?:per\s*month|/\s*month|p\.?m\.?)",
-
-    # 8. Stipend keyword + bare number  →  "stipend: 15000"
-    r"stipend[:\s]+(?:Rs\.?|INR|₹)?\s*([\d,]{4,})",
+    # Structured snippet "Stipend | Rs. 15,000"
+    r"[Ss]tipend\s*\|\s*(?:Rs\.?|INR|₹)\s*([\d,]+)",
+    # USD/EUR for international: "$2000/month", "€1500 per month"
+    r"(?:\$|USD|€|EUR)\s*([\d,]+)\s*(?:per\s*month|/\s*month|/mo)?",
 ]]
 
-# ── Deadline patterns — ordered specific → generic ────────────
+# ── Duration patterns ─────────────────────────────────────────
+_DURATION_PATTERNS = [re.compile(p, re.IGNORECASE) for p in [
+    r"(\d+)\s*(?:-\s*\d+\s*)?months?\s*(?:internship|duration|program)?",
+    r"(\d+)\s*weeks?\s*(?:internship|program)?",
+    r"duration[:\s]+(\d+\s*(?:months?|weeks?))",
+]]
+
+# ── Deadline patterns ─────────────────────────────────────────
 _DEADLINE_PATTERNS = [re.compile(p, re.IGNORECASE) for p in [
-    # "Last date to apply: 30 May 2025"
-    # "Last date of application is 30th April, 2025"
-    # "Last date: 20 June 2025"
     rf"last\s*date\b[^,\n]{{0,40}}?(\d{{1,2}}(?:st|nd|rd|th)?\s+{_M}[,\s]*\d{{4}})",
-
-    # "Apply before 15 June, 2025"
     rf"apply\s*before[:\s]+(\d{{1,2}}(?:st|nd|rd|th)?\s+{_M}[,\s]*\d{{4}})",
-
-    # "Apply by 5th May 2025" / "Apply by May 5, 2025"
     rf"apply\s*by[:\s]+(\d{{1,2}}(?:st|nd|rd|th)?\s+{_M}[,\s]*\d{{4}}|{_M}\s+\d{{1,2}}[,\s]*\d{{4}})",
-
-    # "Deadline: 25 May 2025" / "Deadline 25 May 2025"
     rf"deadline[:\s]+(\d{{1,2}}(?:st|nd|rd|th)?\s+{_M}[,\s]*\d{{4}})",
-
-    # "closes on June 30, 2025" / "Applications close: 1 July 2025"
     rf"closes?(?:\s*on)?[:\s]+(?:\w+\s+)?(\d{{1,2}}(?:st|nd|rd|th)?\s+{_M}[,\s]*\d{{4}}|{_M}\s+\d{{1,2}}[,\s]*\d{{4}})",
-
-    # Numeric fallback: DD/MM/YYYY or DD-MM-YYYY
     r"(\d{1,2}[/-]\d{1,2}[/-]\d{4})",
 ]]
 
-# ── Location keywords — checked in order, first match wins ────
+# ── Location keywords ─────────────────────────────────────────
 _LOCATION_KEYWORDS = [
-    "work from home", "wfh",
-    "remote", "hybrid",
-    "pan india",
-    "bangalore", "bengaluru",
-    "delhi", "new delhi",
-    "mumbai",
-    "hyderabad",
-    "pune",
-    "chennai",
-    "kolkata",
-    "noida",
-    "gurugram", "gurgaon",
-    "ahmedabad",
-    "jaipur",
-    "kochi",
-    "indore",
+    "work from home", "wfh", "remote", "hybrid", "pan india",
+    "worldwide", "global", "international",
+    "bangalore", "bengaluru", "delhi", "new delhi", "mumbai",
+    "hyderabad", "pune", "chennai", "kolkata", "noida",
+    "gurugram", "gurgaon", "ahmedabad", "jaipur", "kochi", "indore",
+    # International cities
+    "san francisco", "new york", "london", "singapore", "dubai",
+    "berlin", "amsterdam", "toronto", "sydney",
 ]
 
 _LOCATION_CANONICAL = {
-    "wfh":            "Work From Home",
-    "work from home": "Work From Home",
-    "bengaluru":      "Bangalore",
-    "new delhi":      "Delhi",
-    "gurgaon":        "Gurugram",
+    "wfh": "Work From Home", "work from home": "Work From Home",
+    "bengaluru": "Bangalore", "new delhi": "Delhi", "gurgaon": "Gurugram",
+    "worldwide": "Remote (Global)", "global": "Remote (Global)",
+    "international": "Remote (Global)",
+    "san francisco": "San Francisco, USA",
+    "new york": "New York, USA",
+    "london": "London, UK",
+    "singapore": "Singapore",
+    "dubai": "Dubai, UAE",
+}
+
+# Month → number for expiry check
+_MONTH_NUM = {
+    "jan":1,"feb":2,"mar":3,"apr":4,"may":5,"jun":6,
+    "jul":7,"aug":8,"sep":9,"oct":10,"nov":11,"dec":12,
 }
 
 
 # ── Public API ────────────────────────────────────────────────
 
 def parse_listing(raw: dict) -> dict:
-    """
-    Enrich a raw scraper dict with parsed stipend / deadline / location.
-    Safe — never raises, always returns a complete dict.
-    """
-    text = (raw.get("snippet", "") + " " + raw.get("title", "")).strip()
+    """Parse a raw scraper dict into structured fields."""
+    text     = (raw.get("snippet","") + " " + raw.get("title","")).strip()
+    deadline = _extract_deadline(text)
+    expired  = _is_expired(deadline)
+
     return {
         **raw,
         "stipend":    _extract_stipend(text),
-        "deadline":   _extract_deadline(text),
+        "deadline":   deadline,
         "location":   _extract_location(text),
-        "apply_link": raw.get("link", ""),
+        "duration":   _extract_duration(text),
+        "expired":    expired,
+        "apply_link": raw.get("link",""),
         "parsed":     True,
     }
 
 
 def parse_all(listings: list[dict]) -> list[dict]:
-    """Parse a batch and log a hit-rate summary."""
-    results = [parse_listing(r) for r in listings]
-    total   = len(results)
+    """Parse batch and log hit-rate summary."""
+    results  = [parse_listing(r) for r in listings]
+    total    = len(results)
+    expired  = sum(1 for r in results if r.get("expired"))
     s = sum(1 for r in results if r["stipend"]  != "Not mentioned")
     d = sum(1 for r in results if r["deadline"] != "Not mentioned")
     l = sum(1 for r in results if r["location"] != "Not mentioned")
     logger.info(
-        f"Parsed {total} listings — "
-        f"stipend {s}/{total} · deadline {d}/{total} · location {l}/{total}"
+        f"Parsed {total} listings — stipend:{s}/{total} deadline:{d}/{total} "
+        f"location:{l}/{total} expired:{expired}"
     )
     return results
 
@@ -147,29 +136,21 @@ def _extract_stipend(text: str) -> str:
         m = pattern.search(text)
         if not m:
             continue
-        raw_val = m.group(1).replace(",", "").strip()
-
+        raw_val = m.group(1).replace(",","").strip()
         try:
-            # Pattern 1 — Lacs/month: multiply by 1,00,000
-            if i == 0:
-                monthly = float(raw_val) * 100_000
-                return f"₹{monthly:,.0f}/month"
-
-            # Pattern 2 — LPA (annual): divide by 12
-            if i == 1:
-                monthly = float(raw_val) * 100_000 / 12
-                return f"₹{monthly:,.0f}/month"
-
-            # Pattern 7 — k notation: "15k" → 15,000
+            if i == 0:   # Lacs/month
+                return f"₹{float(raw_val)*100_000:,.0f}/month"
+            if i == 1:   # LPA → monthly
+                return f"₹{float(raw_val)*100_000/12:,.0f}/month"
             if raw_val.lower().endswith("k"):
-                return f"₹{int(raw_val[:-1]) * 1000:,}/month"
-
-            # All others — plain integer
+                return f"₹{int(raw_val[:-1])*1000:,}/month"
+            if i == 8:   # USD/EUR international
+                # Return as-is with currency symbol detected from text
+                sym = "$" if "$" in text or "USD" in text.upper() else "€"
+                return f"{sym}{int(raw_val):,}/month"
             return f"₹{int(raw_val):,}/month"
-
         except (ValueError, AttributeError):
-            continue   # malformed number — try next pattern
-
+            continue
     return "Not mentioned"
 
 
@@ -178,6 +159,15 @@ def _extract_deadline(text: str) -> str:
         m = pattern.search(text)
         if m:
             return m.group(1).strip().rstrip(",").strip()
+    return "Not mentioned"
+
+
+def _extract_duration(text: str) -> str:
+    """Extract internship duration e.g. '3 months', '6 weeks'."""
+    for pattern in _DURATION_PATTERNS:
+        m = pattern.search(text)
+        if m:
+            return m.group(1).strip() if len(m.group(1)) > 2 else f"{m.group(1)} months"
     return "Not mentioned"
 
 
@@ -191,3 +181,34 @@ def _extract_location(text: str) -> str:
                 seen.add(canonical)
                 found.append(canonical)
     return ", ".join(found) if found else "Not mentioned"
+
+
+def _is_expired(deadline_str: str) -> bool:
+    """
+    Return True if the deadline is definitely in the past.
+    Listings with 'Not mentioned' are kept (can't rule out).
+    """
+    if not deadline_str or deadline_str == "Not mentioned":
+        return False
+    try:
+        # Try to extract year from deadline string
+        year_m = re.search(r"\b(20\d{2})\b", deadline_str)
+        if not year_m:
+            return False
+        year = int(year_m.group(1))
+        if year < CURRENT_YEAR:
+            return True
+        if year > CURRENT_YEAR:
+            return False
+        # Same year — check month
+        month_m = re.search(
+            r"(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)",
+            deadline_str.lower()
+        )
+        if month_m:
+            month_num = _MONTH_NUM.get(month_m.group(1)[:3], 0)
+            current_month = datetime.now().month
+            return month_num < current_month
+    except Exception:
+        pass
+    return False

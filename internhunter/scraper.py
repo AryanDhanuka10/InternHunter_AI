@@ -1,121 +1,165 @@
-"""Web scraper — pulls internship listings from multiple sources."""
+"""
+scraper.py — Web scraper using Serper (Google Search API).
+
+Improvements in this version:
+  - Strips \n from API key before use (header bug fix)
+  - Year-aware queries — forces 2026 results
+  - Expanded sources — 15+ platforms including international
+  - Separate international remote search
+  - Snippet enrichment hints for parser
+"""
 import time, random, logging, requests
-from datetime import datetime
-from internhunter.config import SERPER_API_KEY, INTERNSHIP_ROLES, MAX_RESULTS_PER_RUN
+from datetime import datetime, timezone
+from internhunter.config import (
+    SERPER_API_KEY, INTERNSHIP_ROLES, INTERNATIONAL_ROLES, MAX_RESULTS_PER_RUN
+)
 
 logger = logging.getLogger(__name__)
 
 SERPER_URL = "https://google.serper.dev/search"
 
+# ── Known sources — used for source detection + badge display ──
 SOURCES = [
+    # Indian platforms
     "internshala.com",
-    "linkedin.com/jobs",
     "unstop.com",
-    "wellfound.com",
-    "indeed.co.in",
     "letsintern.com",
     "iimjobs.com",
     "naukri.com",
     "glassdoor.co.in",
+    "foundit.in",
+    "shine.com",
+    "freshersworld.com",
+    "hirist.tech",
+    # Professional networks
+    "linkedin.com",
+    "wellfound.com",
+    "angellist.com",
+    # International
+    "indeed.com",
+    "internships.com",
+    "remoteok.com",
+    "weworkremotely.com",
+    "remote.co",
+    "simplyhired.com",
+    "greenhouse.io",
+    "lever.co",
 ]
 
-# ── Retry / rate-limit settings ───────────────────────────────
-MAX_RETRIES   = 3          # retries per role on 429 / network error
-RETRY_BACKOFF = [2, 5, 10] # seconds to wait before each retry
-POLITE_DELAY  = (1.5, 3.0) # random sleep range between roles (seconds)
+MAX_RETRIES   = 3
+RETRY_BACKOFF = [2, 5, 10]
+POLITE_DELAY  = (1.5, 2.5)
 
 
-def google_search_internships(role: str, extra_query: str = "") -> list[dict]:
+def google_search_internships(role: str, international: bool = False) -> list[dict]:
     """
-    Query Serper (Google Search API) for a given role.
-    Handles:
-      - Missing API key         → warns and returns []
-      - HTTP 429 rate limit     → retries with exponential backoff
-      - Empty organic results   → logs and returns []
-      - Network / timeout error → logs and returns []
+    Query Serper for a given role.
+    international=True → searches globally, not just India.
     """
-    if not SERPER_API_KEY:
-        logger.warning("SERPER_API_KEY not set — add it to your .env and rerun")
+    # Always strip key — fixes the \n InvalidHeader bug
+    api_key = SERPER_API_KEY.strip()
+    if not api_key:
+        logger.warning("SERPER_API_KEY not set — add it to .env")
         return []
 
-    query   = f"{role} internship 2026 india {extra_query} stipend apply site:internshala.com OR site:linkedin.com OR site:unstop.com OR site:wellfound.com"
-    headers = {"X-API-KEY": SERPER_API_KEY, "Content-Type": "application/json"}
-    payload = {"q": query, "num": 10, "gl": "in", "hl": "en"}
+    # Build query — year-locked to 2026, domain-specific
+    if international:
+        query = (
+            f"{role} 2026 stipend OR salary apply "
+            f"site:linkedin.com OR site:remoteok.com OR site:weworkremotely.com "
+            f"OR site:wellfound.com OR site:internships.com OR site:greenhouse.io"
+        )
+        geo = "us"   # broader results for international
+    else:
+        query = (
+            f"{role} 2026 india stipend apply "
+            f"site:internshala.com OR site:unstop.com OR site:linkedin.com "
+            f"OR site:wellfound.com OR site:naukri.com OR site:hirist.tech "
+            f"OR site:iimjobs.com OR site:letsintern.com"
+        )
+        geo = "in"
+
+    headers = {
+        "X-API-KEY":    api_key,
+        "Content-Type": "application/json",
+    }
+    payload = {"q": query, "num": 10, "gl": geo, "hl": "en"}
 
     for attempt in range(MAX_RETRIES):
         try:
             resp = requests.post(SERPER_URL, json=payload, headers=headers, timeout=15)
 
-            # ── Rate limit hit ─────────────────────────────────
             if resp.status_code == 429:
                 wait = RETRY_BACKOFF[attempt]
-                logger.warning(f"Rate limited on '{role}' (attempt {attempt+1}/{MAX_RETRIES}) — waiting {wait}s")
+                logger.warning(f"Rate limited on '{role}' (attempt {attempt+1}) — waiting {wait}s")
                 time.sleep(wait)
                 continue
 
-            # ── Auth error ─────────────────────────────────────
             if resp.status_code == 401:
-                logger.error("Invalid SERPER_API_KEY — check your .env file")
+                logger.error("Invalid SERPER_API_KEY — check .env (no spaces or newlines)")
                 return []
 
-            # ── Other HTTP errors ──────────────────────────────
             resp.raise_for_status()
-
             organic = resp.json().get("organic", [])
 
             if not organic:
-                logger.info(f"No results returned for '{role}' — Serper query may need tuning")
+                logger.info(f"No results for '{role}' — query may need tuning")
                 return []
 
             results = []
             for item in organic:
                 results.append({
-                    "title":      item.get("title", "").strip(),
-                    "link":       item.get("link", "").strip(),
-                    "snippet":    item.get("snippet", "").strip(),
-                    "source":     _detect_source(item.get("link", "")),
-                    "role":       role,
-                    "scraped_at": datetime.utcnow().isoformat(),
+                    "title":         item.get("title", "").strip(),
+                    "link":          item.get("link", "").strip(),
+                    "snippet":       item.get("snippet", "").strip(),
+                    "source":        _detect_source(item.get("link", "")),
+                    "role":          role,
+                    "is_international": international,
+                    "scraped_at":    datetime.now(timezone.utc).isoformat(),
                 })
 
             logger.info(f"  ✓  '{role}' → {len(results)} results")
             return results
 
         except requests.exceptions.Timeout:
-            logger.warning(f"Timeout on '{role}' (attempt {attempt+1}/{MAX_RETRIES})")
+            logger.warning(f"Timeout on '{role}' (attempt {attempt+1})")
             time.sleep(RETRY_BACKOFF[attempt])
 
         except requests.exceptions.ConnectionError:
-            logger.error(f"No internet connection while fetching '{role}'")
+            logger.error(f"No internet — fetching '{role}'")
             return []
 
         except Exception as e:
             logger.error(f"Unexpected error on '{role}': {type(e).__name__}: {e}")
             return []
 
-    logger.error(f"All {MAX_RETRIES} attempts failed for '{role}' — skipping")
+    logger.error(f"All {MAX_RETRIES} attempts failed for '{role}'")
     return []
 
 
 def _detect_source(url: str) -> str:
+    url_lower = url.lower()
     for src in SOURCES:
-        if src in url:
+        if src in url_lower:
             return src
     return "other"
 
 
 def scrape_all_roles() -> list[dict]:
     """
-    Run search for every role in config, deduplicate by URL.
-    Returns up to MAX_RESULTS_PER_RUN unique listings.
+    Scrape all Indian + international roles, deduplicate by URL.
+    Returns up to MAX_RESULTS_PER_RUN listings.
     """
     all_results, seen = [], set()
+    all_roles = [(r, False) for r in INTERNSHIP_ROLES] + \
+                [(r, True)  for r in INTERNATIONAL_ROLES]
 
-    logger.info(f"Starting scrape for {len(INTERNSHIP_ROLES)} roles...")
+    logger.info(f"Starting scrape — {len(INTERNSHIP_ROLES)} Indian + {len(INTERNATIONAL_ROLES)} international roles")
 
-    for i, role in enumerate(INTERNSHIP_ROLES, 1):
-        logger.info(f"[{i}/{len(INTERNSHIP_ROLES)}] Searching: {role}")
-        results = google_search_internships(role)
+    for i, (role, is_intl) in enumerate(all_roles, 1):
+        tag = "🌍" if is_intl else "🇮🇳"
+        logger.info(f"[{i}/{len(all_roles)}] {tag} Searching: {role}")
+        results = google_search_internships(role, international=is_intl)
 
         added = 0
         for r in results:
@@ -125,15 +169,12 @@ def scrape_all_roles() -> list[dict]:
                 added += 1
 
         if added == 0 and results:
-            logger.info(f"  ↳ All {len(results)} results were duplicates — skipped")
+            logger.info(f"  ↳ All {len(results)} were duplicates")
 
-        # Polite delay between roles (skip after last one)
-        if i < len(INTERNSHIP_ROLES):
-            delay = random.uniform(*POLITE_DELAY)
-            logger.debug(f"  Sleeping {delay:.1f}s before next role...")
-            time.sleep(delay)
+        if i < len(all_roles):
+            time.sleep(random.uniform(*POLITE_DELAY))
 
-    total = len(all_results)
+    total  = len(all_results)
     capped = min(total, MAX_RESULTS_PER_RUN)
-    logger.info(f"Scrape complete — {total} unique listings found, returning {capped}")
+    logger.info(f"Scrape complete — {total} unique, returning {capped}")
     return all_results[:MAX_RESULTS_PER_RUN]
