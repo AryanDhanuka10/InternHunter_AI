@@ -3,224 +3,224 @@
   30 new opportunities
 ============================================================
 
-  [1] 61 Natural Language Processing (NLP) Jobs - Internshala
+  [1] 24 MLOps Engineering Jobs for Freshers in Chennai - Internshala
       Source:   internshala.com
-      Stipend:  —
-      Deadline: —
-      Location: —
-      Apply:    https://internshala.com/jobs/natural-language-processing-nlp-jobs/
-
-  [2] 56 Natural Language Processing (NLP) Internships - Internshala
-      Source:   internshala.com
-      Stipend:  —
-      Deadline: —
-      Location: —
-      Apply:    https://internshala.com/internships/natural-language-processing-nlp-internship/
-
-  [3] 720 Machine Learning Intern Job Vacancies In India - Naukri.com
-      Source:   naukri.com
-      Stipend:  —
-      Deadline: —
-      Location: —
-      Apply:    https://www.naukri.com/machine-learning-intern-jobs-in-india-2
-
-  [4] 42 Deep Learning Internships - Internshala
-      Source:   internshala.com
-      Stipend:  —
-      Deadline: —
-      Location: —
-      Apply:    https://internshala.com/internships/deep-learning-internship/
-
-  [5] 147 Python Internship Job Vacancies In Chennai - Naukri.com
-      Source:   naukri.com
       Stipend:  —
       Deadline: —
       Location: Chennai
-      Apply:    https://www.naukri.com/python-internship-jobs-in-chennai
+      Apply:    https://internshala.com/fresher-jobs/mlops-engineering-jobs-in-chennai/
 
-  [6] Python Internship jobs in Ahmedabad - LinkedIn
-      Source:   linkedin.com
-      Stipend:  —
-      Deadline: —
-      Location: Ahmedabad
-      Apply:    https://in.linkedin.com/jobs/python-internship-jobs-ahmedabad
-
-  [7] Python Internships: Find 288 Python Intern Jobs - Internshala
+  [2] 40 Part Time MLOps Engineering Internships in Ernakulam
       Source:   internshala.com
       Stipend:  —
       Deadline: —
       Location: —
-      Apply:    https://internshala.com/internships/python-internship/
+      Apply:    https://internshala.com/internships/part-time-mlops-engineering-jobs-in-ernakulam/
 
-  [8] Python Internship jobs in India - LinkedIn
+  [3] 11 MLOps Engineering Internships - Internshala
+      Source:   internshala.com
+      Stipend:  —
+      Deadline: —
+      Location: —
+      Apply:    https://internshala.com/internships/mlops-engineering-internship/
+
+  [4] 40 MLOps Engineering Internships in Chennai - Internshala
+      Source:   internshala.com
+      Stipend:  —
+      Deadline: —
+      Location: Chennai
+      Apply:    https://internshala.com/internships/mlops-engineering-internship-in-chennai/
+
+  [5] 14 Computer Vision Internships - Internshala
+      Source:   internshala.com
+      Stipend:  —
+      Deadline: —
+      Location: —
+      Apply:    https://internshala.com/internships/computer-vision-internship/
+
+  [6] Python Development Internship - Kukbit SL | 952529 - Unstop
+      Source:   unstop.com
+      Stipend:  —
+      Deadline: —
+      Location: —
+      Apply:    https://unstop.com/internships/python-development-internship-kukbit-sl-952529
+
+  [7] 500 Ai Internship Stipend Job Vacancies | Indeed
+      Source:   indeed.com
+      Stipend:  —
+      Deadline: —
+      Location: —
+      Apply:    https://in.indeed.com/q-ai-internship-stipend-jobs.html
+
+  [8] 341 Artificial Intelligence Machine Learning Internship jobs in United ...
       Source:   linkedin.com
       Stipend:  —
       Deadline: —
       Location: —
-      Apply:    https://in.linkedin.com/jobs/python-internship-jobs
+      Apply:    https://www.linkedin.com/jobs/artificial-intelligence-machine-learning-internship-jobs
 
-  [9] AIRBUS OFFERS GEN AI INTERNSHIP FOR COLLEGE STUDENTS ...
-      Source:   linkedin.com
+  [9] Data Science Intern jobs in New Brunswick, Nj - Indeed
+      Source:   indeed.com
       Stipend:  —
       Deadline: —
       Location: —
-      Apply:    https://www.linkedin.com/pulse/airbus-offers-gen-ai-internship-college-students-bangalore-grover-kfodc
+      Apply:    https://www.indeed.com/q-data-science-intern-l-new-brunswick,-nj-jobs.html
 
-  [10] Meta Internship India : Eligibility & Stipend - Hirist Blog
+  [10] Data Science Intern jobs in Jersey City, Nj - Indeed
+      Source:   indeed.com
+      Stipend:  —
+      Deadline: —
+      Location: —
+      Apply:    https://www.indeed.com/q-data-science-intern-l-jersey-city,-nj-jobs.html
+
+  [11] Summer 2025 Internship Machine Learning Jobs, Employment ...
+      Source:   indeed.com
+      Stipend:  —
+      Deadline: —
+      Location: —
+      Apply:    https://www.indeed.com/q-summer-2025-internship-machine-learning-jobs.html
+
+  [12] 300 Machine Learning Internship With Stipend Job ... - Indeed
+      Source:   indeed.com
+      Stipend:  —
+      Deadline: —
+      Location: —
+      Apply:    https://in.indeed.com/q-machine-learning-internship-with-stipend-l-remote-jobs.html
+
+  [13] Cognizant Internship India: How to Apply & Eligibility - Hirist Blog
       Source:   hirist.tech
-      Stipend:  —
+      Stipend:  ₹10,000/month
       Deadline: —
       Location: —
-      Apply:    https://www.hirist.tech/blog/meta-internship-india-eligibility-stipend/
+      Apply:    https://www.hirist.tech/blog/cognizant-internship-india-how-to-apply-eligibility/
 
-  [11] 714 Machine Learning Intern Job Vacancies In India - Naukri.com
-      Source:   naukri.com
-      Stipend:  —
-      Deadline: —
-      Location: —
-      Apply:    https://www.naukri.com/machine-learning-intern-jobs-in-india
-
-  [12] Data Science Internship jobs in United States - LinkedIn
-      Source:   linkedin.com
-      Stipend:  —
-      Deadline: —
-      Location: —
-      Apply:    https://www.linkedin.com/jobs/data-science-internship-jobs
-
-  [13] Open Positions | Motional
-      Source:   greenhouse.io
-      Stipend:  —
-      Deadline: —
-      Location: —
-      Apply:    https://job-boards.greenhouse.io/motional
-
-  [14] 55,000+ Machine Learning Engineer jobs in United States - LinkedIn
-      Source:   linkedin.com
-      Stipend:  —
-      Deadline: —
-      Location: —
-      Apply:    https://www.linkedin.com/jobs/machine-learning-engineer-jobs
-
-  [15] 1,000+ Artificial Intelligence jobs in United States - LinkedIn
-      Source:   linkedin.com
-      Stipend:  —
-      Deadline: —
-      Location: —
-      Apply:    https://www.linkedin.com/jobs/artificial-intelligence-jobs
-
-  [16] 99,000+ Machine Learning jobs in United States - LinkedIn
-      Source:   linkedin.com
-      Stipend:  —
-      Deadline: —
-      Location: —
-      Apply:    https://www.linkedin.com/jobs/machine-learning-jobs
-
-  [17] Research Intern jobs in United States - LinkedIn
-      Source:   linkedin.com
-      Stipend:  —
-      Deadline: —
-      Location: —
-      Apply:    https://www.linkedin.com/jobs/research-intern-jobs
-
-  [18] 1,000+ Machine Learning Intern jobs in United States - LinkedIn
-      Source:   linkedin.com
-      Stipend:  —
-      Deadline: —
-      Location: —
-      Apply:    https://www.linkedin.com/jobs/machine-learning-intern-jobs
-
-  [19] Intern Nlp Jobs - Naukri.com
-      Source:   naukri.com
-      Stipend:  —
-      Deadline: —
-      Location: Remote (Global), Ahmedabad
-      Apply:    https://www.naukri.com/intern-nlp-jobs
-
-  [20] Natural Language Processing (NLP) Internships in Delhi - Internshala
+  [14] 40 Part Time MLOps Engineering Remote Jobs in Pune for Women
       Source:   internshala.com
       Stipend:  —
       Deadline: —
-      Location: Delhi
-      Apply:    https://internshala.com/internships/natural-language-processing-nlp-internship-in-delhi/
+      Location: Remote, Pune
+      Apply:    https://internshala.com/jobs-for-women/part-time-mlops-engineering-jobs-in-pune/remote/
 
-  [21] 44 Natural Language Processing (NLP) Internships in Bangalore
+  [15] 40 Part Time MLOps Engineering Remote Female Jobs in Delhi ...
+      Source:   internshala.com
+      Stipend:  —
+      Deadline: —
+      Location: Remote, Delhi
+      Apply:    https://internshala.com/jobs-for-women/part-time-mlops-engineering-jobs-in-delhi/remote/
+
+  [16] 40 MLOps Engineering Internships in Bangalore - Internshala
       Source:   internshala.com
       Stipend:  —
       Deadline: —
       Location: Bangalore
-      Apply:    https://internshala.com/internships/natural-language-processing-nlp-internship-in-bangalore/
+      Apply:    https://internshala.com/internships/mlops-engineering-internship-in-bangalore/
 
-  [22] 74 Python/Django Internships - Internshala
+  [17] Top 37 Work From Home Python/Django Internships - Internshala
       Source:   internshala.com
       Stipend:  —
       Deadline: —
-      Location: Bangalore
-      Apply:    https://internshala.com/internships/python-django-internship/
+      Location: Work From Home
+      Apply:    https://internshala.com/internships/work-from-home-python-django-internships/
 
-  [23] 152 Python Internships in Hyderabad - Internshala
-      Source:   internshala.com
-      Stipend:  —
-      Deadline: —
-      Location: Hyderabad
-      Apply:    https://internshala.com/internships/python-internship-in-hyderabad/
-
-  [24] Python Internship Jobs - Naukri.com
-      Source:   naukri.com
-      Stipend:  —
-      Deadline: —
-      Location: Bangalore, Mumbai, Hyderabad, Noida
-      Apply:    https://www.naukri.com/python-internship-jobs
-
-  [25] 344 Python Internship Job Vacancies In Bangalore - Naukri.com
-      Source:   naukri.com
-      Stipend:  —
-      Deadline: —
-      Location: Bangalore
-      Apply:    https://www.naukri.com/python-internship-jobs-in-bangalore
-
-  [26] Python Internship jobs in Bengaluru - LinkedIn
-      Source:   linkedin.com
-      Stipend:  —
-      Deadline: —
-      Location: Bangalore
-      Apply:    https://in.linkedin.com/jobs/python-internship-jobs-bengaluru
-
-  [27] 600 Data Science Intern jobs in Bengaluru - LinkedIn
-      Source:   linkedin.com
-      Stipend:  —
-      Deadline: —
-      Location: Bangalore
-      Apply:    https://in.linkedin.com/jobs/data-science-intern-jobs-bengaluru
-
-  [28] 42 Natural Language Processing (NLP) Internships in Uttar Pradesh
-      Source:   internshala.com
-      Stipend:  —
-      Deadline: —
-      Location: —
-      Apply:    https://internshala.com/internships/natural-language-processing-nlp-internship-in-uttar-pradesh/
-
-  [29] Mahipal Jadeja - foreigninternships2026 #paidinternship - LinkedIn
+  [18] MICROSOFT OFFERS INTERNSHIP WITH STIPEND, ROLES, AND ...
       Source:   linkedin.com
       Stipend:  —
       Deadline: —
       Location: —
-      Apply:    https://www.linkedin.com/posts/mahipal12_foreigninternships2026-paidinternship-activity-7454048415841210369-0N3c
+      Apply:    https://www.linkedin.com/pulse/microsoft-offers-internship-stipend-roles-eligibility-sneha-grover-x3whc
 
-  [30] NICSI Paid Internship Scheme Summer Batch 2026 - LinkedIn
-      Source:   linkedin.com
+  [19] DRDO Internship 2026: Eligibility, Labs, How to Apply, Duration
+      Source:   foundit.in
       Stipend:  —
       Deadline: —
       Location: —
-      Apply:    https://www.linkedin.com/posts/schandrakeshroshan_summer-nicsi-activity-7447931523800166400-oidZ
+      Apply:    https://www.foundit.in/career-advice/drdo-internship-apply/
+
+  [20] Python Developer Internship - MNJ Software Private Limited - Unstop
+      Source:   unstop.com
+      Stipend:  —
+      Deadline: —
+      Location: —
+      Apply:    https://unstop.com/internships/python-developer-internship-mnj-software-private-limited-1619182
+
+  [21] IIT Patna Summer Internship 2026: Apply Now - foundit
+      Source:   foundit.in
+      Stipend:  —
+      Deadline: —
+      Location: —
+      Apply:    https://www.foundit.in/career-advice/iit-patna-summer-internship-details/
+
+  [22] Google Software Engineering Internship 2026: Full Details - foundit
+      Source:   foundit.in
+      Stipend:  —
+      Deadline: —
+      Location: —
+      Apply:    https://www.foundit.in/career-advice/google-software-engineering-internship-apply/
+
+  [23] Cisco Internship 2026 [Software Engineer] – Full Details - foundit
+      Source:   foundit.in
+      Stipend:  —
+      Deadline: —
+      Location: —
+      Apply:    https://www.foundit.in/career-advice/cisco-internship-software-engineering/
+
+  [24] TCS Data Analyst Internship 2026: Eligibility, Application, Skills
+      Source:   foundit.in
+      Stipend:  —
+      Deadline: —
+      Location: —
+      Apply:    https://www.foundit.in/career-advice/tcs-data-analyst-internship-apply/
+
+  [25] NICSI Internship 2026 : Apply by May 31 [ Paid Opportunity ] - foundit
+      Source:   foundit.in
+      Stipend:  —
+      Deadline: —
+      Location: —
+      Apply:    https://www.foundit.in/career-advice/nic-internship-apply/
+
+  [26] Flexible Intern Remote Data Analytics Internship Jobs - Indeed
+      Source:   indeed.com
+      Stipend:  —
+      Deadline: —
+      Location: Remote
+      Apply:    https://www.indeed.com/q-intern-remote-data-analytics-internship-jobs.html
+
+  [27] Flexible Ai Remote Internship Jobs - Indeed
+      Source:   indeed.com
+      Stipend:  —
+      Deadline: —
+      Location: Remote
+      Apply:    https://www.indeed.com/q-ai-remote-internship-jobs.html
+
+  [28] Data Science Internship 2026 Jobs, Employment | Indeed
+      Source:   indeed.com
+      Stipend:  —
+      Deadline: —
+      Location: —
+      Apply:    https://www.indeed.com/q-data-science-internship-2026-jobs.html
+
+  [29] Data Science Internship Summer 2026 Jobs, Employment | Indeed
+      Source:   indeed.com
+      Stipend:  —
+      Deadline: —
+      Location: —
+      Apply:    https://www.indeed.com/q-data-science-internship-summer-2026-jobs.html
+
+  [30] Data Science Intern 2026 Graduate Jobs, Employment | Indeed
+      Source:   indeed.com
+      Stipend:  —
+      Deadline: —
+      Location: —
+      Apply:    https://www.indeed.com/q-data-science-intern-2026-graduate-jobs.html
 
 ============================================================
   REFERRAL FINDER
 ============================================================
 
-  [1] Airbus
-      Hint:    Search LinkedIn for 'Airbus BU alumni' → connect and ask for a referral for the AI research intern role
-      Alumni:  https://www.linkedin.com/search/results/people/?keywords=Airbus+BU&origin=GLOBAL_SEARCH_HEADER&sid=referral
-      Jobs:    https://www.linkedin.com/jobs/search/?keywords=Airbus+AI+research+intern&f_C=
+  [1] Microsoft
+      Hint:    Search LinkedIn for 'Microsoft BU alumni' → connect and ask for a referral for the computer vision intern role
+      Alumni:  https://www.linkedin.com/search/results/people/?keywords=Microsoft+BU&origin=GLOBAL_SEARCH_HEADER&sid=referral
+      Jobs:    https://www.linkedin.com/jobs/search/?keywords=Microsoft+computer+vision+intern&f_C=
 
 ============================================================
   InternHunter Bot · auto-generated

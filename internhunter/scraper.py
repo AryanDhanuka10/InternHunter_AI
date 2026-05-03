@@ -1,12 +1,6 @@
 """
 scraper.py — Web scraper using Serper (Google Search API).
-
-Improvements in this version:
-  - Strips \n from API key before use (header bug fix)
-  - Year-aware queries — forces 2026 results
-  - Expanded sources — 15+ platforms including international
-  - Separate international remote search
-  - Snippet enrichment hints for parser
+21 platforms tracked. Indian + international remote search.
 """
 import time, random, logging, requests
 from datetime import datetime, timezone
@@ -15,27 +9,29 @@ from internhunter.config import (
 )
 
 logger = logging.getLogger(__name__)
-
 SERPER_URL = "https://google.serper.dev/search"
 
-# ── Known sources — used for source detection + badge display ──
+# ── All tracked sources ───────────────────────────────────────
 SOURCES = [
-    # Indian platforms
+    # Indian job boards
     "internshala.com",
     "unstop.com",
     "letsintern.com",
     "iimjobs.com",
     "naukri.com",
     "glassdoor.co.in",
-    "foundit.in",
+    "foundit.in",           # formerly Monster India
     "shine.com",
     "freshersworld.com",
     "hirist.tech",
-    # Professional networks
+    "apna.co",
+    "cutshort.io",
+    "instahyre.com",
+    # Professional/global
     "linkedin.com",
     "wellfound.com",
     "angellist.com",
-    # International
+    # International remote
     "indeed.com",
     "internships.com",
     "remoteok.com",
@@ -44,45 +40,43 @@ SOURCES = [
     "simplyhired.com",
     "greenhouse.io",
     "lever.co",
+    "ycombinator.com",      # YC job board
 ]
 
 MAX_RETRIES   = 3
 RETRY_BACKOFF = [2, 5, 10]
 POLITE_DELAY  = (1.5, 2.5)
 
+# ── Indian site list for site: filter ─────────────────────────
+_INDIAN_SITES = (
+    "site:internshala.com OR site:unstop.com OR site:linkedin.com "
+    "OR site:wellfound.com OR site:naukri.com OR site:hirist.tech "
+    "OR site:iimjobs.com OR site:letsintern.com OR site:foundit.in "
+    "OR site:cutshort.io OR site:instahyre.com OR site:apna.co"
+)
+
+_INTL_SITES = (
+    "site:linkedin.com OR site:remoteok.com OR site:weworkremotely.com "
+    "OR site:wellfound.com OR site:internships.com OR site:greenhouse.io "
+    "OR site:lever.co OR site:ycombinator.com OR site:indeed.com"
+)
+
 
 def google_search_internships(role: str, international: bool = False) -> list[dict]:
-    """
-    Query Serper for a given role.
-    international=True → searches globally, not just India.
-    """
-    # Always strip key — fixes the \n InvalidHeader bug
+    """Query Serper for a role. Strips API key to fix \n header bug."""
     api_key = SERPER_API_KEY.strip()
     if not api_key:
         logger.warning("SERPER_API_KEY not set — add it to .env")
         return []
 
-    # Build query — year-locked to 2026, domain-specific
     if international:
-        query = (
-            f"{role} 2026 stipend OR salary apply "
-            f"site:linkedin.com OR site:remoteok.com OR site:weworkremotely.com "
-            f"OR site:wellfound.com OR site:internships.com OR site:greenhouse.io"
-        )
-        geo = "us"   # broader results for international
+        query = f"{role} 2026 stipend OR salary apply {_INTL_SITES}"
+        geo   = "us"
     else:
-        query = (
-            f"{role} 2026 india stipend apply "
-            f"site:internshala.com OR site:unstop.com OR site:linkedin.com "
-            f"OR site:wellfound.com OR site:naukri.com OR site:hirist.tech "
-            f"OR site:iimjobs.com OR site:letsintern.com"
-        )
-        geo = "in"
+        query = f"{role} 2026 india stipend apply {_INDIAN_SITES}"
+        geo   = "in"
 
-    headers = {
-        "X-API-KEY":    api_key,
-        "Content-Type": "application/json",
-    }
+    headers = {"X-API-KEY": api_key, "Content-Type": "application/json"}
     payload = {"q": query, "num": 10, "gl": geo, "hl": "en"}
 
     for attempt in range(MAX_RETRIES):
@@ -91,7 +85,7 @@ def google_search_internships(role: str, international: bool = False) -> list[di
 
             if resp.status_code == 429:
                 wait = RETRY_BACKOFF[attempt]
-                logger.warning(f"Rate limited on '{role}' (attempt {attempt+1}) — waiting {wait}s")
+                logger.warning(f"Rate limited '{role}' (attempt {attempt+1}) — waiting {wait}s")
                 time.sleep(wait)
                 continue
 
@@ -103,32 +97,30 @@ def google_search_internships(role: str, international: bool = False) -> list[di
             organic = resp.json().get("organic", [])
 
             if not organic:
-                logger.info(f"No results for '{role}' — query may need tuning")
+                logger.info(f"No results for '{role}'")
                 return []
 
             results = []
             for item in organic:
                 results.append({
-                    "title":         item.get("title", "").strip(),
-                    "link":          item.get("link", "").strip(),
-                    "snippet":       item.get("snippet", "").strip(),
-                    "source":        _detect_source(item.get("link", "")),
-                    "role":          role,
+                    "title":            item.get("title","").strip(),
+                    "link":             item.get("link","").strip(),
+                    "snippet":          item.get("snippet","").strip(),
+                    "source":           _detect_source(item.get("link","")),
+                    "role":             role,
                     "is_international": international,
-                    "scraped_at":    datetime.now(timezone.utc).isoformat(),
+                    "scraped_at":       datetime.now(timezone.utc).isoformat(),
                 })
 
             logger.info(f"  ✓  '{role}' → {len(results)} results")
             return results
 
         except requests.exceptions.Timeout:
-            logger.warning(f"Timeout on '{role}' (attempt {attempt+1})")
+            logger.warning(f"Timeout '{role}' (attempt {attempt+1})")
             time.sleep(RETRY_BACKOFF[attempt])
-
         except requests.exceptions.ConnectionError:
-            logger.error(f"No internet — fetching '{role}'")
+            logger.error(f"No internet — '{role}'")
             return []
-
         except Exception as e:
             logger.error(f"Unexpected error on '{role}': {type(e).__name__}: {e}")
             return []
@@ -146,15 +138,15 @@ def _detect_source(url: str) -> str:
 
 
 def scrape_all_roles() -> list[dict]:
-    """
-    Scrape all Indian + international roles, deduplicate by URL.
-    Returns up to MAX_RESULTS_PER_RUN listings.
-    """
+    """Scrape all Indian + international roles, deduplicate by URL."""
     all_results, seen = [], set()
     all_roles = [(r, False) for r in INTERNSHIP_ROLES] + \
                 [(r, True)  for r in INTERNATIONAL_ROLES]
 
-    logger.info(f"Starting scrape — {len(INTERNSHIP_ROLES)} Indian + {len(INTERNATIONAL_ROLES)} international roles")
+    logger.info(
+        f"Starting scrape — {len(INTERNSHIP_ROLES)} Indian + "
+        f"{len(INTERNATIONAL_ROLES)} international roles"
+    )
 
     for i, (role, is_intl) in enumerate(all_roles, 1):
         tag = "🌍" if is_intl else "🇮🇳"
