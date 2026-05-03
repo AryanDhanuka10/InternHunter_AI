@@ -24,12 +24,12 @@ USER_RESUME_PATH = _env("USER_RESUME_PATH", "assets/resume.pdf")
 INTERNSHIP_ROLES = [
     "machine learning intern",
     "data science intern",
-    "software engineering intern",
-    "backend developer intern",
-    "AI research intern",
     "python developer intern",
     "deep learning intern",
     "NLP intern",
+    "software engineering intern",
+    "backend developer intern",
+    "AI research intern",
 ]
 
 # International remote roles get a separate targeted search
