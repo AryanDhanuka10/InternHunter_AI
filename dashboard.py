@@ -96,7 +96,7 @@ def _mark_applied(opp_id, method="company_site"):
 
 def _run_pipeline():
     if CLOUD_MODE:
-        result = _api("/api/actions/run-pipeline", method="POST")
+        result = _api("/api/actions/run-pipeline?async_run=true", method="POST")
         if result:
             ok = not result.get("stages_fail")
             return ok, json.dumps(result, indent=2)
