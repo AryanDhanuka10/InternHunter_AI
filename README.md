@@ -2,8 +2,9 @@
 
 **InternHunter AI** is an automated internship discovery engine designed for engineering students. It eliminates the "manual refresh" fatigue by searching the web daily, parsing key details (stipends, deadlines, locations), and delivering high-quality leads straight to your inbox and a glassmorphism-inspired dashboard.
 
-**🌐 Live Frontend:** [internhunterai-aryandhanuka10.streamlit.app](https://internhunterai-aryandhanuka10.streamlit.app/)
-**🌐 Live Backend:** [aryandhanuka10-internhunter-api.hf.space/docs](https://aryandhanuka10-internhunter-api.hf.space/docs)
+**🌐 Live Frontend:** [internhunterai-aryandhanuka10.streamlit.app](https://internhunterai-aryandhanuka10.streamlit.app/).
+
+**🌐 Live Backend:** [aryandhanuka10-internhunter-api.hf.space/docs](https://aryandhanuka10-internhunter-api.hf.space/docs).
 
 ---
 
