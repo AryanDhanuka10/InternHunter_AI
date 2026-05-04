@@ -81,7 +81,7 @@ def google_search_internships(role: str, international: bool = False) -> list[di
 
     for attempt in range(MAX_RETRIES):
         try:
-            resp = requests.post(SERPER_URL, json=payload, headers=headers, timeout=15)
+            resp = requests.post(SERPER_URL, json=payload, headers=headers, timeout=20)
 
             if resp.status_code == 429:
                 wait = RETRY_BACKOFF[attempt]
@@ -94,6 +94,7 @@ def google_search_internships(role: str, international: bool = False) -> list[di
                 return []
 
             resp.raise_for_status()
+            data = resp.json()
             organic = resp.json().get("organic", [])
 
             if not organic:
@@ -102,6 +103,7 @@ def google_search_internships(role: str, international: bool = False) -> list[di
 
             results = []
             for item in organic:
+                link = item.get("link", "").strip()
                 results.append({
                     "title":            item.get("title","").strip(),
                     "link":             item.get("link","").strip(),

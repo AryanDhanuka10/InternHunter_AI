@@ -510,7 +510,11 @@ elif page == "⚡ Pipeline":
                             cwd=os.path.dirname(__file__))
                         ok     = res.returncode == 0
                         output = res.stdout + res.stderr
-                st.success("Done!") if ok else st.error("Had errors")
+                if ok:
+                    st.success("Pipeline executed successfully!")
+                else:
+                    st.error("Pipeline failed. Check the logs below.")
+                # Display the actual output
                 st.code(output[-4000:], language="text")
             st.markdown("---")
             s = _get_stats()
