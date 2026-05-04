@@ -225,6 +225,19 @@ def update_score(opp_id: int, score: int):
         conn.commit()
 
 
+def unmark_applied(opp_id: int):
+    """Revert an opportunity from applied back to new status."""
+    with get_conn() as conn:
+        conn.execute(
+            "UPDATE opportunities SET status=? WHERE id=?",
+            ('new', opp_id)
+        )
+        # Also remove from applied log
+        conn.execute("DELETE FROM applied WHERE opp_id=?", (opp_id,))
+        conn.commit()
+    logger.info(f"Unmarked opp {opp_id} — status reset to new")
+
+
 def rescore_all() -> int:
     """
     Re-compute and save scores for every row in the DB.

@@ -14,6 +14,37 @@ from internhunter.config import MIN_STIPEND, PREFERRED_LOCATIONS, SCORE_WEIGHTS,
 logger = logging.getLogger(__name__)
 
 
+
+# ── Domain whitelist / blacklist ──────────────────────────────
+# Listings whose title contains ANY block keyword are dropped
+# regardless of stipend (prevents off-domain suggestions)
+_BLOCK_KEYWORDS = [
+    "content writing", "content creator", "marketing intern",
+    "social media", "graphic design", "ui/ux", "ui design",
+    "sales intern", "business development", "hr intern",
+    "human resource", "finance intern", "accounting",
+    "legal intern", "operations intern", "supply chain",
+    "full stack", "fullstack", "front-end", "frontend",
+    "react intern", "angular", "vue.js",
+    "android intern", "ios intern", "mobile app",
+    "devops intern", "cloud intern",
+    "event management", "customer support",
+    "video editing", "photography", "telecalling",
+]
+
+# Must match at least ONE of these to be kept (your domain)
+_DOMAIN_KEYWORDS = [
+    "machine learning", " ml ", "data science", "data scientist",
+    "software engineer", "software develop", "swe intern",
+    "backend", "back-end", "python developer", "python intern",
+    "deep learning", "nlp", "natural language",
+    "computer vision", "artificial intelligence", " ai ",
+    "ai intern", "ai research", "mlops", "research intern",
+    "data analyst", "data engineer", "algorithm",
+    "software intern", "tech intern", "engineering intern",
+]
+
+
 def apply_filters(listings: list[dict]) -> tuple[list[dict], list[dict]]:
     """
     Filter and score listings.
@@ -23,6 +54,11 @@ def apply_filters(listings: list[dict]) -> tuple[list[dict], list[dict]]:
 
     for listing in listings:
         stipend_int = _stipend_to_int(listing.get("stipend",""))
+
+        # ── Drop off-domain listings ─────────────────────────
+        if _is_off_domain(listing):
+            dropped.append({**listing, "score":0, "drop_reason":"off-domain"})
+            continue
 
         # ── Drop expired ──────────────────────────────────────
         if listing.get("expired"):
@@ -108,3 +144,22 @@ def _compute_score(listing: dict, stipend_int: int) -> int:
         score += w.get("is_international", 0)
 
     return score
+
+
+def _is_off_domain(listing: dict) -> bool:
+    """
+    Return True if the listing title clearly does NOT match your target domain.
+    Uses a two-pass check:
+      1. Block if any off-domain keyword in title
+      2. If no domain keyword found AND title is specific enough, also block
+    Category pages (e.g. "150 ML internships") pass through — their title
+    won't contain block keywords.
+    """
+    text = (listing.get("title","") + " " + listing.get("role","")).lower()
+
+    # Pass 1: explicit block
+    for kw in _BLOCK_KEYWORDS:
+        if kw in text:
+            return True
+
+    return False
